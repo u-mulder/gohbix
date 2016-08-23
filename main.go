@@ -25,30 +25,107 @@ type ComponentData struct {
 }
 
 func (cd *ComponentData) Create() {
+    // TODO - intellect gues what current folder is
+    fmt.Println("Creating component '" + cd.Namespace + ":" + cd.Name + "'")
 
-    fmt.Println( "cd is ", cd )     // TODO
+    var path string
+    var hasLangs bool
 
+    path = curPath + "/" + cd.Namespace
+    // check if exists
+    if mkDir(path) {
+        path = path + "/" + cd.Name
+        if mkDir(path) {
+            mkFileWithContents(path + "/component.php", FL_TYPE_TPL)
+            if 0 < len(cd.Langs) {
+                hasLangs = true
+            }
+
+            path = path + "/templates"
+            if mkDir(path) {
+                for _, v := range cd.TplNames {
+                    if mkDir (path + "/" + v) {
+                        mkFileWithContents(path + "/" + v + "/template.php", FL_TYPE_TPL)
+
+                        if hasLangs {
+                            if mkDir (path + "/" + v + "/lang") {
+                                for _, lv := range cd.Langs {
+                                    if mkDir(path + "/" + v + "/lang/" + lv) {
+                                        mkFileWithContents(path + "/" + v + "/lang/" + lv + "/template.php", FL_TYPE_LANG)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fmt.Println("Creating component '" + cd.Namespace + ":" + cd.Name + "' completed")
 }
 
 type LangFileData struct {
-
+    //CurPosition string
+    //TemplateName string
+    Langs []string
 }
 
 func (lfd *LangFileData) Create() {
+    fmt.Println("Creating lang files")
 
-    fmt.Println( "lfd is ", lfd )     // TODO
+    langPath := curPath + "/lang"
+    if mkDir(langPath) {
+        for _, v := range lfd.Langs {
+            if mkDir(langPath + "/" + v) {
+                mkFileWithContents(langPath + "/" + v + "/template.php", FL_TYPE_LANG)
+            }
+        }
+    }
 
+    fmt.Println("Creating lang files completed")
 }
 
 type ModuleData struct {
     Name string
+    AddOptions bool
+    AddAdminFolder bool
+    InstallFolders []string
+    Langs []string
 }
 
 func (md *ModuleData) Create() {
+    fmt.Println("Creating module '" + md.Name + "'")
 
-    // TODO
-    fmt.Println("md is ", md)
+    path := curPath + "/" + md.Name
+    var ipath string
+    if mkDir(path) {
+        mkFileWithContents(path + "/include.php", FL_TYPE_OTAG)
 
+        ipath = path + "/install"
+        if mkDir(ipath) {
+            mkFileWithContents(ipath + "/index.php", FL_TYPE_OTAG)
+            mkFileWithContents(ipath + "/version.php", FL_TYPE_OTAG)
+            for _, v := range md.InstallFolders  {
+                mkDir(ipath + "/" + v)
+            }
+        }
+
+        if md.AddOptions {
+            mkFileWithContents(path + "/options.php", FL_TYPE_OTAG)
+        }
+
+        if md.AddAdminFolder {
+            mkDir(path + "/admin")
+        }
+
+        if 0 < len(md.Langs) {
+            // TODO
+        }
+
+    }
+
+    fmt.Println("Creating module '" + md.Name + "' completed")
 }
 
 type TemplateData struct {
@@ -94,6 +171,7 @@ const (
     EN_M = "m"
     EN_T = "t"
 
+    defMdlName = "my.module.name"
     defNamespace = "myns"
     defCmpName = "my.component"
     defLang = "ru"
@@ -106,12 +184,18 @@ const (
 const (
     FL_TYPE_TPL = iota
     FL_TYPE_LANG
+    FL_TYPE_OTAG
+
+    LF_POS_COMPONENT
+    LF_POS_TEMPLATES
+    LF_POS_TEMPLATE
 )
 
 func init() {
     tpls = make(map[int]string)
     tpls[FL_TYPE_TPL] = "<?php\nif (!defined(\"B_PROLOG_INCLUDED\") || B_PROLOG_INCLUDED!==true) die();\n"
     tpls[FL_TYPE_LANG] = "<?php\n$MESS[''] = '';\n"
+    tpls[FL_TYPE_OTAG] = "<?php\n"
 }
 
 func main() {
@@ -199,20 +283,80 @@ func createComponent() {
     newCp.Create()
 }
 
-func createLangFile() {     // TODO
-    // TODO
-    fmt.Println("Lang file and it's folder will be created in current path")
-    fmt.Println("Enter lang (two symbols, 'ru' is default)")
-    // scan
+func createLangFile() {
+    // TODO - intellect guessing what folder is it - component, templates, certain template
+    langName := "_"
+    newLfd := new(LangFileData)
 
-    //
+    fmt.Println("Lang file(s) and related folder(s) will be created in current path '" + curPath + "'")
+    for "" != langName {
+        fmt.Println("Enter lang. Leave blank to stop entering langs: ")
+        scanner.Scan()
+        langName = clearTextValue(scanner.Text())
+        if "" != langName {
+            newLfd.Langs = append(newLfd.Langs, langName)
+        }
+    }
 
-
+    newLfd.Create()
 }
 
-func createModule() {  // TODO
-    fmt.Println("This option is under development!")
-    // TODO
+func createModule() {
+    var mdlName, addOpts, addAfldr, addIfldrs, fldName, addLangs, langName string
+    newMd := new(ModuleData)
+
+    fmt.Println("Module will be created from current path '" + curPath + "'")
+    fmt.Println("Enter <fg=blue;bg=red>module</> name. Leave blank to create '" + defMdlName + "' template")
+    scanner.Scan()
+    mdlName = clearTextValue(scanner.Text())
+    if "" == mdlName {
+        mdlName = defMdlName
+    }
+    newMd.Name = mdlName
+
+    fmt.Println("Add options.php file? (y/n):")
+    scanner.Scan()
+    addOpts = clearTextValue(scanner.Text())
+    newMd.AddOptions = (addOpts == "y" || addOpts == "yes")
+
+    fmt.Println("Add admin folder? (y/n):")
+    scanner.Scan()
+    addAfldr = clearTextValue(scanner.Text())
+    newMd.AddAdminFolder = (addAfldr == "y" || addAfldr == "yes")
+
+    fmt.Println("Add install folders? (y/n):")
+    scanner.Scan()
+    addIfldrs = clearTextValue(scanner.Text())
+    if "y" == addIfldrs || "yes" == addIfldrs {
+        fldName = "_"
+        for "" != fldName {
+            fmt.Println("Enter folder name. Leave blank to stop entering folders: ")
+            scanner.Scan()
+            fldName = clearTextValue(scanner.Text())
+            if "" != fldName  {
+                newMd.InstallFolders = append(newMd.InstallFolders, fldName)
+            }
+        }
+    }
+
+    fmt.Println("Add language support? (y/n):")
+    scanner.Scan()
+    addLangs = clearTextValue(scanner.Text())
+    if addLangs == "y" || addLangs == "yes" {
+        fmt.Println("Default lang '" + defLang + "' already added")
+        newMd.Langs = append(newMd.Langs, defLang)
+        langName = defLang
+        for "" != langName {
+            fmt.Println("Enter lang. Leave blank to stop entering langs: ")
+            scanner.Scan()
+            langName = clearTextValue(scanner.Text())
+            if "" != langName && defLang != langName {
+                newMd.Langs = append(newMd.Langs, langName)
+            }
+        }
+    }
+
+    newMd.Create()
 }
 
 func createTemplate() {
