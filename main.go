@@ -24,22 +24,18 @@ type ComponentData struct {
     Langs []string
 }
 
+// TODO - intellect gues what current folder it is
+// TODO - check if component path already exists
 func (cd *ComponentData) Create() {
-    // TODO - intellect gues what current folder is
     fmt.Println("Creating component '" + cd.Namespace + ":" + cd.Name + "'")
 
     var path string
-    var hasLangs bool
 
     path = curPath + "/" + cd.Namespace
-    // check if exists
     if mkDir(path) {
         path = path + "/" + cd.Name
         if mkDir(path) {
             mkFileWithContents(path + "/component.php", FL_TYPE_TPL)
-            if 0 < len(cd.Langs) {
-                hasLangs = true
-            }
 
             path = path + "/templates"
             if mkDir(path) {
@@ -47,7 +43,7 @@ func (cd *ComponentData) Create() {
                     if mkDir (path + "/" + v) {
                         mkFileWithContents(path + "/" + v + "/template.php", FL_TYPE_TPL)
 
-                        if hasLangs {
+                        if 0 < len(cd.Langs) {
                             if mkDir (path + "/" + v + "/lang") {
                                 for _, lv := range cd.Langs {
                                     if mkDir(path + "/" + v + "/lang/" + lv) {
@@ -186,9 +182,9 @@ const (
     FL_TYPE_LANG
     FL_TYPE_OTAG
 
-    LF_POS_COMPONENT
-    LF_POS_TEMPLATES
-    LF_POS_TEMPLATE
+    LfPosComponent
+    LfPosTemplates
+    LfPosTemplate
 )
 
 func init() {
@@ -216,41 +212,42 @@ func main() {
             createComponent()
 
         case EN_L:
-            createLangFile()
+            //createLangFile()
 
         case EN_M:
-            createModule()
+            //createModule()
 
         case EN_T:
-            createTemplate()
+            //createTemplate()
+
+        default:
+            fmt.Printf("Type %s not supported \n", entityType)
     }
 }
 
 func createComponent() {
-    var cmpNs, cmpName, moreTpls, tplName, addLangs, langName string
+    var moreTpls, tplName, addLangs, langName string
     newCp := new(ComponentData)
 
     fmt.Println("Component will be created from current path '" + curPath + "'")
     fmt.Print("Enter namespace ('" + defNamespace + "' is default), if folder not exists - it will be created: ")
     scanner.Scan()
-    cmpNs = clearTextValue(scanner.Text())
-    if "" == cmpNs {
-        cmpNs = defNamespace
+    newCp.Namespace = clearTextValue(scanner.Text())
+    if "" == newCp.Namespace {
+        newCp.Namespace = defNamespace
     }
-    newCp.Namespace = cmpNs
 
     fmt.Println("Enter component name ('" + defCmpName + "' is default), if component exists - you'll have to additionally confirm overwrite: ")
     scanner.Scan()
-    cmpName = clearTextValue(scanner.Text())
-    if "" == cmpName {
-        cmpName = defCmpName
+    newCp.Name = clearTextValue(scanner.Text())
+    if "" == newCp.Name {
+        newCp.Name = defCmpName
     }
-    newCp.Name = cmpName
 
     fmt.Println("Create other templates except '" + defTplName + "'? (y/n):")
     scanner.Scan()
     moreTpls = clearTextValue(scanner.Text())
-    if moreTpls == "y" || moreTpls == "yes" {
+    if isYes(moreTpls) {
         tplName = "y"
         for "" != tplName {
             fmt.Println("Enter template name ('" + defTplName + "' will be added automatically). Leave blank to stop entering template names: ")
@@ -266,7 +263,7 @@ func createComponent() {
     fmt.Println("Add language support? (y/n):")
     scanner.Scan()
     addLangs = clearTextValue(scanner.Text())
-    if addLangs == "y" || addLangs == "yes" {
+    if isYes(addLangs) {
         fmt.Println("Default lang '" + defLang + "' already added")
         newCp.Langs = append(newCp.Langs, defLang)
         langName = defLang
@@ -440,3 +437,13 @@ func mkFileWithContents(name string, contType int) bool {
 
     return r
 }
+
+func isYes(str string) bool {
+    var b bool
+    if str == "y" || str == "Y" || str == "yes" {
+        b = true
+    }
+
+    return b
+}
+
