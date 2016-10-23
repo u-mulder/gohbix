@@ -67,16 +67,21 @@ type LangFileData struct {
     Langs []string
 }
 
+// TODO - intellect guessing what folder is it (component, templates, certain template)
 func (lfd *LangFileData) Create() {
     fmt.Println("Creating lang files")
 
-    langPath := curPath + "/lang"
-    if mkDir(langPath) {
-        for _, v := range lfd.Langs {
-            if mkDir(langPath + "/" + v) {
-                mkFileWithContents(langPath + "/" + v + "/template.php", FL_TYPE_LANG)
+    if 0 < len(lfd.Langs) {
+        langPath := curPath + "/lang"
+        if mkDir(langPath) {
+            for _, v := range lfd.Langs {
+                if mkDir(langPath + "/" + v) {
+                    mkFileWithContents(langPath + "/" + v + "/template.php", FL_TYPE_LANG)
+                }
             }
         }
+    } else {
+        fmt.Println("/!\\ Langs list empty")
     }
 
     fmt.Println("Creating lang files completed")
@@ -90,7 +95,7 @@ type ModuleData struct {
     Langs []string
 }
 
-func (md *ModuleData) Create() {
+func (md *ModuleData) Create() {    // TODO
     fmt.Println("Creating module '" + md.Name + "'")
 
     path := curPath + "/" + md.Name
@@ -131,8 +136,10 @@ type TemplateData struct {
     Langs []string
 }
 
+// TODO - intellect guessing what folder is it (component, templates, certain template)
 func (td *TemplateData) Create() {
     fmt.Println("Creating template " + td.Name)
+
     tplPath := curPath + "/" + td.Name
     if mkDir(tplPath) {
         mkFileWithContents(tplPath + "/template.php", FL_TYPE_TPL)
@@ -162,10 +169,10 @@ func (td *TemplateData) Create() {
 }
 
 const (
-    EN_C = "c"
-    EN_L = "l"
-    EN_M = "m"
-    EN_T = "t"
+    entCmp = "c"
+    entLfl = "l"
+    entMdl = "m"
+    entTpl = "t"
 
     defMdlName = "my.module.name"
     defNamespace = "myns"
@@ -208,17 +215,17 @@ func main() {
     scanner = bufio.NewScanner(os.Stdin)
 
     switch entityType {
-        case EN_C:
+        case entCmp:
             createComponent()
 
-        case EN_L:
-            //createLangFile()
+        case entLfl:
+            createLangFile()
 
-        case EN_M:
+        case entMdl:
             //createModule()
 
-        case EN_T:
-            //createTemplate()
+        case entTpl:
+            createTemplate()
 
         default:
             fmt.Printf("Type %s not supported \n", entityType)
@@ -281,7 +288,6 @@ func createComponent() {
 }
 
 func createLangFile() {
-    // TODO - intellect guessing what folder is it - component, templates, certain template
     langName := "_"
     newLfd := new(LangFileData)
 
@@ -298,7 +304,7 @@ func createLangFile() {
     newLfd.Create()
 }
 
-func createModule() {
+func createModule() {       // TODO - test
     var mdlName, addOpts, addAfldr, addIfldrs, fldName, addLangs, langName string
     newMd := new(ModuleData)
 
@@ -357,36 +363,35 @@ func createModule() {
 }
 
 func createTemplate() {
-    var tplName, addLangs, langName, addResModfr, addCmpEpilog string
+    var addResModfr, addCmpEpilog, addLangs, langName string
     newTp := new(TemplateData)
 
     fmt.Println("Template will be created from current path '" + curPath + "'")
     fmt.Println("Enter template name. Leave blank to create '" + defTplName + "' template")
     scanner.Scan()
-    tplName = clearTextValue(scanner.Text())
-    if "" == tplName {
-        tplName = defTplName
+    newTp.Name = clearTextValue(scanner.Text())
+    if "" == newTp.Name {
+        newTp.Name = defTplName
     }
-    newTp.Name = tplName
 
     fmt.Println("Add result_modifier file? (y/n):")
     scanner.Scan()
     addResModfr = clearTextValue(scanner.Text())
-    if addResModfr == "y" || addResModfr == "yes" {
+    if isYes(addResModfr) {
         newTp.AddResModfr = true
     }
 
     fmt.Println("Add component_epilog file? (y/n):")
     scanner.Scan()
     addCmpEpilog = clearTextValue(scanner.Text())
-    if addCmpEpilog == "y" || addCmpEpilog == "yes" {
+    if isYes(addCmpEpilog) {
         newTp.AddCmpEpilog = true
     }
 
     fmt.Println("Add language support? (y/n):")
     scanner.Scan()
     addLangs = clearTextValue(scanner.Text())
-    if addLangs == "y" || addLangs == "yes" {
+    if isYes(addLangs) {
         fmt.Println("Default lang '" + defLang + "' already added")
         newTp.Langs = append(newTp.Langs, defLang)
         langName = defLang
@@ -446,4 +451,3 @@ func isYes(str string) bool {
 
     return b
 }
-
