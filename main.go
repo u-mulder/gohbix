@@ -96,12 +96,12 @@ type ModuleData struct {
 }
 
 func (md *ModuleData) Create() {    // TODO
-    fmt.Println("Creating module '" + md.Name + "'")
+    fmt.Printf("Creating module %s%s%s \n", ansiColorGreen, md.Name, ansiColorReset)
 
     path := curPath + "/" + md.Name
-    var ipath string
+    //var ipath string
     if mkDir(path) {
-        mkFileWithContents(path + "/include.php", FL_TYPE_OTAG)
+        /*mkFileWithContents(path + "/include.php", FL_TYPE_OTAG)
 
         ipath = path + "/install"
         if mkDir(ipath) {
@@ -122,11 +122,10 @@ func (md *ModuleData) Create() {    // TODO
 
         if 0 < len(md.Langs) {
             // TODO
-        }
-
+        }*/
     }
 
-    fmt.Println("Creating module '" + md.Name + "' completed")
+    fmt.Printf("Creating module %s%s%s completed\n", ansiColorGreen, md.Name, ansiColorReset)
 }
 
 type TemplateData struct {
@@ -194,6 +193,16 @@ const (
     LfPosTemplate
 )
 
+const (
+    ansiColorRed        = "\x1b[31m"
+    ansiColorGreen      = "\x1b[32m"
+    ansiColorYellow     = "\x1b[33m"
+    ansiColorBlue       = "\x1b[34m"
+    ansiColorMagenta    = "\x1b[35m"
+    ansiColorCyan       = "\x1b[36m"
+    ansiColorReset      = "\x1b[0m"
+)
+
 func init() {
     tpls = make(map[int]string)
     tpls[FL_TYPE_TPL] = "<?php\nif (!defined(\"B_PROLOG_INCLUDED\") || B_PROLOG_INCLUDED!==true) die();\n"
@@ -222,7 +231,7 @@ func main() {
             createLangFile()
 
         case entMdl:
-            //createModule()
+            createModule()
 
         case entTpl:
             createTemplate()
@@ -231,6 +240,8 @@ func main() {
             fmt.Printf("Type %s not supported \n", entityType)
     }
 }
+
+// TODO - colorize messages
 
 func createComponent() {
     var moreTpls, tplName, addLangs, langName string
@@ -304,33 +315,30 @@ func createLangFile() {
     newLfd.Create()
 }
 
-func createModule() {       // TODO - test
-    var mdlName, addOpts, addAfldr, addIfldrs, fldName, addLangs, langName string
+func createModule() {
+    var addIfldrs, fldName, langName string
     newMd := new(ModuleData)
 
     fmt.Println("Module will be created from current path '" + curPath + "'")
-    fmt.Println("Enter <fg=blue;bg=red>module</> name. Leave blank to create '" + defMdlName + "' template")
+    fmt.Printf("Enter module name. Leave blank to create %s%s%s template\n", ansiColorGreen, defMdlName, ansiColorReset)
     scanner.Scan()
-    mdlName = clearTextValue(scanner.Text())
-    if "" == mdlName {
-        mdlName = defMdlName
+    newMd.Name = clearTextValue(scanner.Text())
+    if "" == newMd.Name {
+        newMd.Name = defMdlName
     }
-    newMd.Name = mdlName
 
-    fmt.Println("Add options.php file? (y/n):")
+    fmt.Printf("Add %soptions.php%s file? (y/n):\n", ansiColorGreen, ansiColorReset)
     scanner.Scan()
-    addOpts = clearTextValue(scanner.Text())
-    newMd.AddOptions = (addOpts == "y" || addOpts == "yes")
+    newMd.AddOptions = isYes(clearTextValue(scanner.Text()))
 
-    fmt.Println("Add admin folder? (y/n):")
+    fmt.Printf("Add %sadmin%s folder? (y/n):\n", ansiColorGreen, ansiColorReset)
     scanner.Scan()
-    addAfldr = clearTextValue(scanner.Text())
-    newMd.AddAdminFolder = (addAfldr == "y" || addAfldr == "yes")
+    newMd.AddAdminFolder = isYes(clearTextValue(scanner.Text()))
 
-    fmt.Println("Add install folders? (y/n):")
+    fmt.Printf("Add %sinstall%s folder(s)? (y/n):\n", ansiColorGreen, ansiColorReset)
     scanner.Scan()
     addIfldrs = clearTextValue(scanner.Text())
-    if "y" == addIfldrs || "yes" == addIfldrs {
+    if isYes(addIfldrs) {
         fldName = "_"
         for "" != fldName {
             fmt.Println("Enter folder name. Leave blank to stop entering folders: ")
@@ -344,9 +352,8 @@ func createModule() {       // TODO - test
 
     fmt.Println("Add language support? (y/n):")
     scanner.Scan()
-    addLangs = clearTextValue(scanner.Text())
-    if addLangs == "y" || addLangs == "yes" {
-        fmt.Println("Default lang '" + defLang + "' already added")
+    if isYes(clearTextValue(scanner.Text())) {
+        fmt.Printf("Default lang %s%s%s already added\n", ansiColorBlue, defLang, ansiColorReset)
         newMd.Langs = append(newMd.Langs, defLang)
         langName = defLang
         for "" != langName {
