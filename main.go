@@ -17,6 +17,7 @@ type EntityCreator interface {
     Create()
 }
 
+// ComponentData is a struct which stores new component info
 type ComponentData struct {
     Namespace string
     Name string
@@ -24,6 +25,7 @@ type ComponentData struct {
     Langs []string
 }
 
+// Create folders and file structure for nw component
 // TODO - intellect gues what current folder it is
 // TODO - check if component path already exists
 func (cd *ComponentData) Create() {
@@ -95,39 +97,68 @@ type ModuleData struct {
     Langs []string
 }
 
-func (md *ModuleData) Create() {    // TODO
+func (md *ModuleData) Create() {
     fmt.Printf("Creating module %s%s%s \n", ansiColorGreen, md.Name, ansiColorReset)
 
     path := curPath + "/" + md.Name
-    //var ipath string
+    var ipath string
     if mkDir(path) {
-        /*mkFileWithContents(path + "/include.php", FL_TYPE_OTAG)
+        mkFileWithContents(path + "/include.php", FL_TYPE_OTAG)
 
         ipath = path + "/install"
+        langFiles := map[string][]string{}
+
         if mkDir(ipath) {
             mkFileWithContents(ipath + "/index.php", FL_TYPE_OTAG)
             mkFileWithContents(ipath + "/version.php", FL_TYPE_OTAG)
             for _, v := range md.InstallFolders  {
                 mkDir(ipath + "/" + v)
             }
+
+            langFiles["/install"] = []string{"/version.php", "/index.php"}
         }
 
         if md.AddOptions {
             mkFileWithContents(path + "/options.php", FL_TYPE_OTAG)
+            langFiles["/"] = []string{"options.php"}
         }
 
         if md.AddAdminFolder {
             mkDir(path + "/admin")
+
+            langFiles["/admin"] = []string{"/menu.php"}
         }
 
-        if 0 < len(md.Langs) {
-            // TODO
-        }*/
+        if 0 < len(md.Langs) && 0 < len(langFiles) {
+            langPath := path + "/lang"
+            var curLangPath string
+            var hasPath bool
+            if mkDir(langPath) {
+                for _, v := range md.Langs {
+                    curLangPath = langPath + "/" + v
+                    if mkDir(curLangPath) {
+                        for lfPath, lfFiles := range langFiles {
+                            hasPath = true
+                            if "/" != lfPath {
+                                hasPath = mkDir(curLangPath + lfPath)
+                            }
+
+                            if hasPath {
+                                for _, lfFile := range lfFiles  {
+                                    mkFileWithContents(curLangPath + lfPath + lfFile, FL_TYPE_LANG)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fmt.Printf("Creating module %s%s%s completed\n", ansiColorGreen, md.Name, ansiColorReset)
 }
 
+// TemplateData is a struct which stores new template info
 type TemplateData struct {
     Name string
     AddResModfr bool
