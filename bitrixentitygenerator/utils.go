@@ -1,19 +1,35 @@
-package bitrixentitygenerator 
+package bitrixentitygenerator
 
-import "strings"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
 var ansiColorCodes = map[string]string{
-	"red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "blue": "\x1b[34m",
-    "magenta": "\x1b[35m",
-    "cyan": "\x1b[36m",
-    "reset": "\x1b[0m",
+	"red":     "\x1b[31m",
+	"green":   "\x1b[32m",
+	"yellow":  "\x1b[33m",
+	"blue":    "\x1b[34m",
+	"magenta": "\x1b[35m",
+	"cyan":    "\x1b[36m",
+	"reset":   "\x1b[0m",
+}
+
+const (
+	langFileLine = iota
+	openTag
+	prologCheckLine
+)
+
+var codeContents = map[int]string{
+	0: "<?php\n$MESS[''] = '';\n",
+	1: "<?php\n",
+	2: "<?php\nif (!defined(\"B_PROLOG_INCLUDED\") || B_PROLOG_INCLUDED!==true) die();\n",
 }
 
 func clearTextValue(txt string) string {
-    return strings.TrimSpace(txt)
+	return strings.TrimSpace(txt)
 }
 
 func colorize(str string, ansiColorCodeKey string) string {
@@ -25,37 +41,43 @@ func colorize(str string, ansiColorCodeKey string) string {
 	return ansiColorCodeValue + str + ansiColorCodes["reset"]
 }
 
+func getContentByType(contType int) string {
+	content, ok := codeContents[contType]
+	if ok {
+		return content
+	}
+
+	return ""
+}
+
 func isYes(str string) bool {
-    return (str == "y" || str == "Y" || str == "yes")
+	return (str == "y" || str == "Y" || str == "yes")
 }
 
 func mkDir(name string) error {
-    /*var err error
-    if err := os.Mkdir(name, defDirMode); err == nil {
-        r = true
-    } else {
-        fmt.Println("Error creating path '" + name + "': ", err.Error())
-    }
+	if err := os.Mkdir(name, defaultDirPermissions); err != nil {
+		fmt.Println("Error creating path '"+colorize(name, "green")+"': ", colorize(err.Error(), "red"))
+		return err
+	}
 
-    return r*/
+	return nil
 }
 
 func mkFileWithContents(name string, contType int) error {
-    //var err error
+	fh, err := os.Create(name)
 
-    /*if fh, err := os.Create(name); err == nil {
-        r = true
-        _ = os.Chmod(name, defFileMode)
+	if err != nil {
+		fmt.Println("Error creating file '"+colorize(name, "green")+"': ", colorize(err.Error(), "red"))
+		return err
+	}
 
-        _, err = fh.Write([]byte(tpls[contType]))
+	_ = os.Chmod(name, defaultFilePermissions)
+	_, err = fh.Write([]byte(getContentByType(contType)))
 
-        if err != nil {
-            fmt.Println("Error writing contents to file '" + name + "': ", err.Error())
-        }
+	if err != nil {
+		fmt.Println("Error writing contents to file '"+colorize(name, "green")+"': ", colorize(err.Error(), "red"))
+		return err
+	}
 
-    } else {
-        fmt.Println("Error creating file '" + name + "': ", err.Error())
-    }*/
-
-    // return r
+	return nil
 }
