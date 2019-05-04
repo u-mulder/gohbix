@@ -12,10 +12,6 @@ var ansiColorCodes = map[string]string{
     "reset": "\x1b[0m",
 }
 
-func isYes(str string) bool {
-    return (str == "y" || str == "Y" || str == "yes")
-}
-
 func clearTextValue(txt string) string {
     return strings.TrimSpace(txt)
 }
@@ -27,4 +23,39 @@ func colorize(str string, ansiColorCodeKey string) string {
 	}
 
 	return ansiColorCodeValue + str + ansiColorCodes["reset"]
+}
+
+func isYes(str string) bool {
+    return (str == "y" || str == "Y" || str == "yes")
+}
+
+func mkDir(name string) error {
+    /*var err error
+    if err := os.Mkdir(name, defDirMode); err == nil {
+        r = true
+    } else {
+        fmt.Println("Error creating path '" + name + "': ", err.Error())
+    }
+
+    return r*/
+}
+
+func mkFileWithContents(name string, contType int) error {
+    //var err error
+
+    /*if fh, err := os.Create(name); err == nil {
+        r = true
+        _ = os.Chmod(name, defFileMode)
+
+        _, err = fh.Write([]byte(tpls[contType]))
+
+        if err != nil {
+            fmt.Println("Error writing contents to file '" + name + "': ", err.Error())
+        }
+
+    } else {
+        fmt.Println("Error creating file '" + name + "': ", err.Error())
+    }*/
+
+    // return r
 }
