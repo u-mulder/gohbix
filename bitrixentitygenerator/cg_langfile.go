@@ -5,21 +5,22 @@ import (
 	"fmt"
 )
 
-type LangFileData struct {
+type langFileData struct {
 	//CurPosition string
 	//TemplateName string
 	Langs []string
 	EntityPathData
 }
 
+// NewLangFileGenerator returns new instance of `langFileData`
 func NewLangFileGenerator(path string) (EntityGenerator, error) {
-	lfd := LangFileData{}
+	lfd := langFileData{}
 	lfd.Path = path
 
 	return &lfd, nil
 }
 
-func (lfd *LangFileData) CollectEntityParameters(scanner *bufio.Scanner) {
+func (lfd *langFileData) CollectEntityParameters(scanner *bufio.Scanner) {
 	langName := "_"
 
 	fmt.Println("Lang file(s) and related folder(s) will be created in current path '" + colorize(lfd.Path, "green") + "'")
@@ -35,7 +36,7 @@ func (lfd *LangFileData) CollectEntityParameters(scanner *bufio.Scanner) {
 }
 
 // TODO - intellect guessing what folder is it (component, templates, certain template)
-func (lfd *LangFileData) CreateEntity() {
+func (lfd *langFileData) CreateEntity() {
 	var err error
 
 	if 0 < len(lfd.Langs) {
